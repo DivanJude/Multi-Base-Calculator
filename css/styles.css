@@ -1098,3 +1098,382 @@ body {
     opacity: 1;
   }
 }
+
+/* ==========================================================================
+   Mode Navigation Switcher Tabs
+   ========================================================================== */
+.mode-navigation-bar {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--bg-secondary);
+  padding: 0.35rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--card-border);
+  align-self: flex-start;
+}
+
+.mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 0.925rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mode-tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mode-tab.active {
+  background: var(--card-bg);
+  color: var(--brand-text);
+  border-color: var(--card-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.mode-tab svg {
+  flex-shrink: 0;
+}
+
+.tab-view {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .mode-navigation-bar {
+    width: 100%;
+  }
+
+  .mode-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ==========================================================================
+   BCD Operands & Cards (Left Column)
+   ========================================================================== */
+.bcd-inputs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.bcd-operand-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: border-color var(--transition-fast);
+}
+
+.bcd-operand-card:focus-within {
+  border-color: #BFDBFE;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.bcd-operand-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bcd-operand-tag {
+  font-size: 0.825rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brand-text);
+}
+
+.bcd-bit-count {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: #FFFFFF;
+  border: 1px solid var(--card-border);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.bcd-dual-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .bcd-dual-inputs {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bcd-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bcd-field-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bcd-field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.copy-btn-inline {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.725rem;
+  height: auto;
+}
+
+.bcd-field-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: #FFFFFF;
+  transition: all var(--transition-fast);
+}
+
+.bcd-field-input:focus {
+  outline: none;
+  border-color: var(--brand-interactive);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* BCD Operator Toggle Connector */
+.bcd-op-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0;
+}
+
+.bcd-op-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.bcd-op-selector {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.bcd-op-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: #FFFFFF;
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.bcd-op-btn:hover {
+  border-color: #BFDBFE;
+  color: var(--brand-interactive);
+}
+
+.bcd-op-btn.active {
+  background: #EFF6FF;
+  border-color: var(--brand-interactive);
+  color: var(--brand-text);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.08);
+}
+
+.bcd-op-btn .op-sym {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ==========================================================================
+   BCD Results & Step-by-Step Verification (Right Column)
+   ========================================================================== */
+.bcd-results-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Main BCD Summary Banner */
+.bcd-summary-card {
+  background: #FFFFFF;
+  border: 1.5px solid #BFDBFE;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.bcd-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bcd-summary-title {
+  font-size: 0.825rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand-text);
+}
+
+.bcd-primary-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.bcd-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bcd-val-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 90px;
+}
+
+.bcd-val-code {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--brand-interactive);
+  letter-spacing: 0.04em;
+}
+
+.bcd-val-dec {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Subtraction Complements Side-by-Side Cards */
+.bcd-complements-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .bcd-complements-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bcd-method-card {
+  background: #FFFFFF;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.bcd-method-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: 0.65rem;
+}
+
+.bcd-method-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.carry-flag-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.carry-flag-badge.carry-yes {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+}
+
+.carry-flag-badge.carry-no {
+  background: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+
+.bcd-method-result {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bcd-method-result .res-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.bcd-method-result .res-val {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--brand-interactive);
+}
+
+.bcd-method-result .res-dec {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+

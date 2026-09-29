@@ -48,254 +48,405 @@
       </div>
     </header>
 
-    <!-- Two-Column Dashboard Grid -->
-    <div class="dashboard-grid">
+    <!-- Application Mode Switcher Navigation -->
+    <nav class="mode-navigation-bar" role="tablist" aria-label="Calculator Modes">
+      <button type="button" class="mode-tab active" id="tab-btn-multibase" role="tab" aria-selected="true" aria-controls="view-multibase">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+          <line x1="8" y1="6" x2="16" y2="6"></line>
+          <line x1="16" y1="14" x2="16" y2="18"></line>
+          <path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path>
+          <path d="M12 14h.01"></path><path d="M8 14h.01"></path>
+          <path d="M12 18h.01"></path><path d="M8 18h.01"></path>
+        </svg>
+        <span>Multi-Base Calculator</span>
+      </button>
 
-      <!-- LEFT BIG CARD: Input Values, Inter-Operand Operators & Conversions -->
-      <section class="dashboard-card left-card" aria-labelledby="section-inputs-heading">
-        <!-- Card Header -->
-        <div class="card-header-block">
-          <div class="section-title-wrap">
-            <h2 id="section-inputs-heading" class="section-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="4" y1="9" x2="20" y2="9"></line>
-                <line x1="4" y1="15" x2="20" y2="15"></line>
-                <line x1="10" y1="3" x2="8" y2="21"></line>
-                <line x1="16" y1="3" x2="14" y2="21"></line>
-              </svg>
-              Input Values & Complements
-            </h2>
-            <span class="section-subtitle">Real-time validation and active base r's / (r−1)'s complements</span>
+      <button type="button" class="mode-tab" id="tab-btn-bcd" role="tab" aria-selected="false" aria-controls="view-bcd">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span>BCD Arithmetic &amp; Complements</span>
+      </button>
+    </nav>
+
+    <!-- TAB VIEW 1: Multi-Base Calculator -->
+    <div id="view-multibase" class="tab-view active" role="tabpanel" aria-labelledby="tab-btn-multibase">
+      <!-- Two-Column Dashboard Grid -->
+      <div class="dashboard-grid">
+
+        <!-- LEFT BIG CARD: Input Values, Inter-Operand Operators & Conversions -->
+        <section class="dashboard-card left-card" aria-labelledby="section-inputs-heading">
+          <!-- Card Header -->
+          <div class="card-header-block">
+            <div class="section-title-wrap">
+              <h2 id="section-inputs-heading" class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="4" y1="9" x2="20" y2="9"></line>
+                  <line x1="4" y1="15" x2="20" y2="15"></line>
+                  <line x1="10" y1="3" x2="8" y2="21"></line>
+                  <line x1="16" y1="3" x2="14" y2="21"></line>
+                </svg>
+                Input Values & Complements
+              </h2>
+              <span class="section-subtitle">Real-time validation and active base r's / (r−1)'s complements</span>
+            </div>
+
+            <!-- Operands Configuration Toolbar -->
+            <div class="config-toolbar" aria-label="Input Configuration">
+              <div class="min-requirement-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Minimum of 3 inputs only</span>
+              </div>
+
+              <div class="config-actions">
+                <button type="button" id="btn-add-row" class="btn btn-primary btn-sm">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Add Input
+                </button>
+                <button type="button" id="btn-reset-demo" class="btn btn-outline btn-sm"
+                  title="Reset to sample demonstration values">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                  </svg>
+                  Demo
+                </button>
+                <button type="button" id="btn-clear-all" class="btn btn-outline btn-sm" title="Clear all input fields">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  Clear
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- Operands Configuration Toolbar -->
-          <div class="config-toolbar" aria-label="Input Configuration">
-            <div class="min-requirement-pill">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          <!-- Dynamic Inputs & Inter-Row Operators Container -->
+          <div id="inputs-container" class="inputs-list">
+            <!-- Dynamically injected rows and operator connectors will appear here -->
+          </div>
+        </section>
+
+        <!-- RIGHT BIG CARD: Calculation Output & Complement Subtraction -->
+        <section class="dashboard-card right-card" id="results-section" aria-live="polite" aria-label="Calculation Area">
+
+          <!-- Output Header -->
+          <div class="panel-header">
+            <h2 class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
-              <span>Minimum of 3 inputs only</span>
-            </div>
-
-            <div class="config-actions">
-              <button type="button" id="btn-add-row" class="btn btn-primary btn-sm">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Add Input
-              </button>
-              <button type="button" id="btn-reset-demo" class="btn btn-outline btn-sm"
-                title="Reset to sample demonstration values">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                  <path d="M3 3v5h5"></path>
-                </svg>
-                Demo
-              </button>
-              <button type="button" id="btn-clear-all" class="btn btn-outline btn-sm" title="Clear all input fields">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-                Clear
-              </button>
-            </div>
+              Calculation Output
+            </h2>
+            <span class="panel-subtitle">Calculated automatically across all 4 number systems</span>
           </div>
-        </div>
 
-        <!-- Dynamic Inputs & Inter-Row Operators Container -->
-        <div id="inputs-container" class="inputs-list">
-          <!-- Dynamically injected rows and operator connectors will appear here -->
-        </div>
-      </section>
-
-      <!-- RIGHT BIG CARD: Calculation Output & Complement Subtraction -->
-      <section class="dashboard-card right-card" id="results-section" aria-live="polite" aria-label="Calculation Area">
-
-        <!-- Output Header -->
-        <div class="panel-header">
-          <h2 class="panel-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
+          <!-- Error banner if calculation fails (e.g. division by zero) -->
+          <div id="calc-error-banner" class="alert alert-error" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            Calculation Output
-          </h2>
-          <span class="panel-subtitle">Calculated automatically across all 4 number systems</span>
-        </div>
-
-        <!-- Error banner if calculation fails (e.g. division by zero) -->
-        <div id="calc-error-banner" class="alert alert-error" style="display: none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-          <div id="calc-error-message">Error message</div>
-        </div>
-
-        <!-- Arithmetic Expression Display -->
-        <div class="expression-box">
-          <span class="expression-label">Full Arithmetic Expression</span>
-          <div id="expression-display" class="expression-content">
-            Enter valid inputs to view calculation
+            <div id="calc-error-message">Error message</div>
           </div>
-        </div>
 
-        <!-- 4-Base Output Cards Grid -->
-        <div class="results-grid">
-          <!-- Binary Card -->
-          <article class="result-box" data-base="2">
-            <div class="result-box-header">
-              <span class="result-box-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 6v12M6 12h12"></path>
+          <!-- Arithmetic Expression Display -->
+          <div class="expression-box">
+            <span class="expression-label">Full Arithmetic Expression</span>
+            <div id="expression-display" class="expression-content">
+              Enter valid inputs to view calculation
+            </div>
+          </div>
+
+          <!-- 4-Base Output Cards Grid -->
+          <div class="results-grid">
+            <!-- Binary Card -->
+            <article class="result-box" data-base="2">
+              <div class="result-box-header">
+                <span class="result-box-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 6v12M6 12h12"></path>
+                  </svg>
+                  Binary (Base 2)
+                </span>
+                <button type="button" class="copy-btn" data-copy-target="result-bin" title="Copy Binary result">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copy
+                </button>
+              </div>
+              <div class="result-box-value">
+                <span id="result-bin">—</span><sub class="result-subscript">2</sub>
+              </div>
+            </article>
+
+            <!-- Octal Card -->
+            <article class="result-box" data-base="8">
+              <div class="result-box-header">
+                <span class="result-box-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  </svg>
+                  Octal (Base 8)
+                </span>
+                <button type="button" class="copy-btn" data-copy-target="result-oct" title="Copy Octal result">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copy
+                </button>
+              </div>
+              <div class="result-box-value">
+                <span id="result-oct">—</span><sub class="result-subscript">8</sub>
+              </div>
+            </article>
+
+            <!-- Decimal Card -->
+            <article class="result-box" data-base="10">
+              <div class="result-box-header">
+                <span class="result-box-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                  </svg>
+                  Decimal (Base 10)
+                </span>
+                <button type="button" class="copy-btn" data-copy-target="result-dec" title="Copy Decimal result">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copy
+                </button>
+              </div>
+              <div class="result-box-value">
+                <span id="result-dec">—</span><sub class="result-subscript">10</sub>
+              </div>
+            </article>
+
+            <!-- Hexadecimal Card -->
+            <article class="result-box" data-base="16">
+              <div class="result-box-header">
+                <span class="result-box-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
+                  </svg>
+                  Hexadecimal (Base 16)
+                </span>
+                <button type="button" class="copy-btn" data-copy-target="result-hex" title="Copy Hexadecimal result">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copy
+                </button>
+              </div>
+              <div class="result-box-value">
+                <span id="result-hex">—</span><sub class="result-subscript">16</sub>
+              </div>
+            </article>
+          </div>
+
+          <!-- Complement Subtraction Section (Simple & Clean with Interactive Input Selection) -->
+          <div id="complement-subtraction-card" class="complement-simple-card" style="display: none;">
+            <div class="panel-header">
+              <span class="panel-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                Binary (Base 2)
+                Subtraction via Complements
               </span>
-              <button type="button" class="copy-btn" data-copy-target="result-bin" title="Copy Binary result">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                Copy
-              </button>
+              <span class="panel-subtitle">Choose which inputs to subtract using r's and (r−1)'s complement methods</span>
             </div>
-            <div class="result-box-value">
-              <span id="result-bin">—</span><sub class="result-subscript">2</sub>
-            </div>
-          </article>
 
-          <!-- Octal Card -->
-          <article class="result-box" data-base="8">
-            <div class="result-box-header">
-              <span class="result-box-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                </svg>
-                Octal (Base 8)
-              </span>
-              <button type="button" class="copy-btn" data-copy-target="result-oct" title="Copy Octal result">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                Copy
-              </button>
-            </div>
-            <div class="result-box-value">
-              <span id="result-oct">—</span><sub class="result-subscript">8</sub>
-            </div>
-          </article>
+            <!-- Input Selection Controls for Subtraction via Complements -->
+            <div class="comp-selector-bar" aria-label="Complement Subtraction Operands Selector">
+              <div class="comp-selector-inputs">
+                <div class="comp-select-group">
+                  <label for="comp-select-m" class="comp-select-label">Minuend (M)</label>
+                  <select id="comp-select-m" class="comp-select" aria-label="Select Minuend input"></select>
+                </div>
 
-          <!-- Decimal Card -->
-          <article class="result-box" data-base="10">
-            <div class="result-box-header">
-              <span class="result-box-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                </svg>
-                Decimal (Base 10)
-              </span>
-              <button type="button" class="copy-btn" data-copy-target="result-dec" title="Copy Decimal result">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                Copy
-              </button>
-            </div>
-            <div class="result-box-value">
-              <span id="result-dec">—</span><sub class="result-subscript">10</sub>
-            </div>
-          </article>
+                <div class="comp-op-divider" aria-hidden="true">−</div>
 
-          <!-- Hexadecimal Card -->
-          <article class="result-box" data-base="16">
-            <div class="result-box-header">
-              <span class="result-box-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
-                </svg>
-                Hexadecimal (Base 16)
-              </span>
-              <button type="button" class="copy-btn" data-copy-target="result-hex" title="Copy Hexadecimal result">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                Copy
-              </button>
-            </div>
-            <div class="result-box-value">
-              <span id="result-hex">—</span><sub class="result-subscript">16</sub>
-            </div>
-          </article>
-        </div>
+                <div class="comp-select-group">
+                  <label for="comp-select-n" class="comp-select-label">Subtrahend (N)</label>
+                  <select id="comp-select-n" class="comp-select" aria-label="Select Subtrahend input"></select>
+                </div>
 
-        <!-- Complement Subtraction Section (Simple & Clean with Interactive Input Selection) -->
-        <div id="complement-subtraction-card" class="complement-simple-card" style="display: none;">
+                <button type="button" id="btn-comp-swap" class="comp-swap-btn" title="Swap Minuend and Subtrahend (M ⇄ N)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                  <span>Swap</span>
+                </button>
+              </div>
+
+              <div class="comp-select-group comp-base-group">
+                <label for="comp-select-base" class="comp-select-label">Calculation Base</label>
+                <select id="comp-select-base" class="comp-select" aria-label="Select Base for complement subtraction">
+                  <option value="auto">Auto (Minuend's Base)</option>
+                  <option value="2">Binary (Base 2)</option>
+                  <option value="8">Octal (Base 8)</option>
+                  <option value="10">Decimal (Base 10)</option>
+                  <option value="16">Hexadecimal (Base 16)</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="complement-subtraction-container" class="complement-simple-container"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- TAB VIEW 2: BCD Arithmetic & Complements -->
+    <div id="view-bcd" class="tab-view" role="tabpanel" aria-labelledby="tab-btn-bcd" style="display: none;">
+      <div class="dashboard-grid">
+
+        <!-- LEFT BIG CARD: BCD Operands & Controls -->
+        <section class="dashboard-card left-card" aria-labelledby="bcd-operands-heading">
+          <div class="card-header-block">
+            <div class="section-title-wrap">
+              <h2 id="bcd-operands-heading" class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                BCD Operands &amp; Operations
+              </h2>
+              <span class="section-subtitle">Real-time 8421 BCD encoding with dual Decimal and 4-bit nibbles sync</span>
+            </div>
+          </div>
+
+          <!-- BCD Validation Error Banner -->
+          <div id="bcd-error-banner" class="alert alert-error" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div id="bcd-error-message">Invalid BCD input</div>
+          </div>
+
+          <!-- Operands Inputs List -->
+          <div class="bcd-inputs-container">
+
+            <!-- OPERAND A -->
+            <div class="bcd-operand-card">
+              <div class="bcd-operand-header">
+                <span class="bcd-operand-tag">Operand A (Augend / Minuend)</span>
+                <span class="bcd-bit-count" id="bcd-count-a">2 Digits &bull; 8 Bits</span>
+              </div>
+              <div class="bcd-dual-inputs">
+                <div class="bcd-field-group">
+                  <label for="bcd-dec-a" class="bcd-field-label">Decimal (Base 10)</label>
+                  <input type="text" id="bcd-dec-a" class="bcd-field-input" placeholder="e.g., 75" value="75" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="bcd-field-group">
+                  <div class="bcd-field-header-row">
+                    <label for="bcd-bin-a" class="bcd-field-label">8421 BCD (4-bit nibbles)</label>
+                    <button type="button" class="copy-btn copy-btn-inline" data-copy-target="bcd-bin-a" title="Copy BCD nibbles">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      Copy
+                    </button>
+                  </div>
+                  <input type="text" id="bcd-bin-a" class="bcd-field-input font-mono" placeholder="e.g., 0111 0101" value="0111 0101" autocomplete="off" spellcheck="false">
+                </div>
+              </div>
+            </div>
+
+            <!-- BCD OPERATION TOGGLE CONNECTOR -->
+            <div class="bcd-op-connector">
+              <span class="bcd-op-label">Select Arithmetic Operation</span>
+              <div class="bcd-op-selector" role="group" aria-label="BCD Operation">
+                <button type="button" class="bcd-op-btn active" data-op="+" id="bcd-op-add">
+                  <span class="op-sym">+</span>
+                  <span class="op-desc">BCD Addition (+0110 Correction)</span>
+                </button>
+                <button type="button" class="bcd-op-btn" data-op="-" id="bcd-op-sub">
+                  <span class="op-sym">−</span>
+                  <span class="op-desc">BCD Subtraction (9's &amp; 10's Complements)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- OPERAND B -->
+            <div class="bcd-operand-card">
+              <div class="bcd-operand-header">
+                <span class="bcd-operand-tag">Operand B (Addend / Subtrahend)</span>
+                <span class="bcd-bit-count" id="bcd-count-b">2 Digits &bull; 8 Bits</span>
+              </div>
+              <div class="bcd-dual-inputs">
+                <div class="bcd-field-group">
+                  <label for="bcd-dec-b" class="bcd-field-label">Decimal (Base 10)</label>
+                  <input type="text" id="bcd-dec-b" class="bcd-field-input" placeholder="e.g., 28" value="28" autocomplete="off" spellcheck="false">
+                </div>
+                <div class="bcd-field-group">
+                  <div class="bcd-field-header-row">
+                    <label for="bcd-bin-b" class="bcd-field-label">8421 BCD (4-bit nibbles)</label>
+                    <button type="button" class="copy-btn copy-btn-inline" data-copy-target="bcd-bin-b" title="Copy BCD nibbles">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      Copy
+                    </button>
+                  </div>
+                  <input type="text" id="bcd-bin-b" class="bcd-field-input font-mono" placeholder="e.g., 0010 1000" value="0010 1000" autocomplete="off" spellcheck="false">
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- RIGHT BIG CARD: BCD Output & Verification Analysis -->
+        <section class="dashboard-card right-card" aria-labelledby="bcd-output-heading">
           <div class="panel-header">
-            <span class="panel-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
+            <h2 id="bcd-output-heading" class="panel-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
-              Subtraction via Complements
-            </span>
-            <span class="panel-subtitle">Choose which inputs to subtract using r's and (r−1)'s complement methods</span>
+              BCD Calculation Output
+            </h2>
+            <span class="panel-subtitle" id="bcd-output-subtitle">Calculated automatically with 9's &amp; 10's complements</span>
           </div>
 
-          <!-- Input Selection Controls for Subtraction via Complements -->
-          <div class="comp-selector-bar" aria-label="Complement Subtraction Operands Selector">
-            <div class="comp-selector-inputs">
-              <div class="comp-select-group">
-                <label for="comp-select-m" class="comp-select-label">Minuend (M)</label>
-                <select id="comp-select-m" class="comp-select" aria-label="Select Minuend input"></select>
-              </div>
-
-              <div class="comp-op-divider" aria-hidden="true">−</div>
-
-              <div class="comp-select-group">
-                <label for="comp-select-n" class="comp-select-label">Subtrahend (N)</label>
-                <select id="comp-select-n" class="comp-select" aria-label="Select Subtrahend input"></select>
-              </div>
-
-              <button type="button" id="btn-comp-swap" class="comp-swap-btn" title="Swap Minuend and Subtrahend (M ⇄ N)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/>
-                </svg>
-                <span>Swap</span>
-              </button>
-            </div>
-
-            <div class="comp-select-group comp-base-group">
-              <label for="comp-select-base" class="comp-select-label">Calculation Base</label>
-              <select id="comp-select-base" class="comp-select" aria-label="Select Base for complement subtraction">
-                <option value="auto">Auto (Minuend's Base)</option>
-                <option value="2">Binary (Base 2)</option>
-                <option value="8">Octal (Base 8)</option>
-                <option value="10">Decimal (Base 10)</option>
-                <option value="16">Hexadecimal (Base 16)</option>
-              </select>
-            </div>
+          <!-- BCD Output Content Container -->
+          <div id="bcd-results-container" class="bcd-results-wrapper">
+            <!-- Dynamically populated via JS -->
           </div>
+        </section>
 
-          <div id="complement-subtraction-container" class="complement-simple-container"></div>
-        </div>
-      </section>
-
+      </div>
     </div>
 
     <!-- Footer -->

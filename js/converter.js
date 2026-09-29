@@ -833,6 +833,558 @@
     };
   }
 
+  // =========================================================================
+  // BCD (BINARY-CODED DECIMAL) ENGINE: 8421 BCD Arithmetic & Complements
+  // =========================================================================
+
+  const BCD_TABLE = {
+    '0': '0000', '1': '0001', '2': '0010', '3': '0011', '4': '0100',
+    '5': '0101', '6': '0110', '7': '0111', '8': '1000', '9': '1001'
+  };
+
+  const REVERSE_BCD_TABLE = {
+    '0000': '0', '0001': '1', '0010': '2', '0011': '3', '0100': '4',
+    '0101': '5', '0110': '6', '0111': '7', '1000': '8', '1001': '9'
+  };
+
+  /**
+   * Validates if a string is a valid BCD bitstring or decimal integer.
+   * @param {string} input 
+   * @param {'decimal'|'bcd'} [mode='decimal']
+   * @returns {{ isValid: boolean, error: string|null, decimalStr: string, bcdSpaced: string, bcdCompact: string, nibbles: string[] }}
+   */
+  function validateBCDInput(input, mode = 'decimal') {
+    if (input === null || input === undefined) {
+      return { isValid: false, error: 'Value is required.', decimalStr: '', bcdSpaced: '', bcdCompact: '', nibbles: [] };
+    }
+
+    const trimmed = String(input).trim();
+    if (trimmed === '') {
+      return { isValid: false, error: 'Value cannot be empty.', decimalStr: '', bcdSpaced: '', bcdCompact: '', nibbles: [] };
+    }
+
+    if (mode === 'bcd') {
+      // Clean spaces
+      const compact = trimmed.replace(/\s+/g, '');
+      if (!/^[01]+$/.test(compact)) {
+        return { isValid: false, error: 'BCD bitstring must contain only 0s and 1s.', decimalStr: '', bcdSpaced: '', bcdCompact: '', nibbles: [] };
+      }
+
+      // Pad to multiple of 4
+      const padLen = (4 - (compact.length % 4)) % 4;
+      const paddedCompact = '0'.repeat(padLen) + compact;
+
+      const nibbles = [];
+      const decDigits = [];
+      for (let i = 0; i < paddedCompact.length; i += 4) {
+        const nibble = paddedCompact.slice(i, i + 4);
+        const decVal = parseInt(nibble, 2);
+        if (decVal > 9) {
+          return {
+            isValid: false,
+            error: `Invalid BCD nibble '${nibble}' (${decVal} > 9). Valid 8421 BCD nibbles are 0000 to 1001.`,
+            decimalStr: '',
+            bcdSpaced: '',
+            bcdCompact: '',
+            nibbles: []
+          };
+        }
+        nibbles.push(nibble);
+        decDigits.push(REVERSE_BCD_TABLE[nibble]);
+      }
+
+      const decStr = decDigits.join('').replace(/^0+/, '') || '0';
+      return {
+        isValid: true,
+        error: null,
+        decimalStr: decStr,
+        bcdSpaced: nibbles.join(' '),
+        bcdCompact: paddedCompact,
+        nibbles
+      };
+    } else {
+      // Decimal mode
+      const clean = trimmed.replace(/^0+/, '') || '0';
+      if (!/^\d+$/.test(clean)) {
+        return { isValid: false, error: 'Decimal value must contain only positive digits (0-9).', decimalStr: '', bcdSpaced: '', bcdCompact: '', nibbles: [] };
+      }
+
+      const nibbles = clean.split('').map(d => BCD_TABLE[d]);
+      return {
+        isValid: true,
+        error: null,
+        decimalStr: clean,
+        bcdSpaced: nibbles.join(' '),
+        bcdCompact: nibbles.join(''),
+        nibbles
+      };
+    }
+  }
+
+  /**
+   * Converts a decimal string to 8421 BCD representation.
+   * @param {string|number} decimalVal 
+   * @param {number} [targetWidth] - Optional digit width to pad
+   * @returns {{ decimalStr: string, bcdSpaced: string, bcdCompact: string, nibbles: string[] }}
+   */
+  function decimalToBCD(decimalVal, targetWidth = 0) {
+    let decStr = String(decimalVal).trim();
+    if (!/^\d+$/.test(decStr)) {
+      throw new Error(`Invalid decimal value for BCD conversion: ${decimalVal}`);
+    }
+
+    if (targetWidth > decStr.length) {
+      decStr = decStr.padStart(targetWidth, '0');
+    }
+
+    const nibbles = decStr.split('').map(d => BCD_TABLE[d]);
+    return {
+      decimalStr: decStr,
+      bcdSpaced: nibbles.join(' '),
+      bcdCompact: nibbles.join(''),
+      nibbles
+    };
+  }
+
+  /**
+   * Converts an 8421 BCD bitstring to decimal.
+   * @param {string} bcdStr 
+   * @returns {string} Decimal string
+   */
+  function bcdToDecimal(bcdStr) {
+    const valResult = validateBCDInput(bcdStr, 'bcd');
+    if (!valResult.isValid) {
+      throw new Error(valResult.error);
+    }
+    return valResult.decimalStr;
+  }
+
+  /**
+   * Performs step-by-step BCD Addition (A + B) with +0110 (+6) nibble correction.
+   * 
+   * @param {string|number} inputA - Decimal or BCD string
+   * @param {string|number} inputB - Decimal or BCD string
+   * @param {'decimal'|'bcd'} [mode='decimal']
+   * @returns {{
+   *   success: boolean,
+   *   error?: string,
+   *   decimalA: string,
+   *   decimalB: string,
+   *   bcdA: string,
+   *   bcdB: string,
+   *   alignedWidth: number,
+   *   nibbleSteps: Array<{
+   *     stepIndex: number,
+   *     placeName: string,
+   *     nibbleA: string,
+   *     digitA: number,
+   *     nibbleB: string,
+   *     digitB: number,
+   *     carryIn: number,
+   *     rawSum: number,
+   *     binSum4Bit: string,
+   *     binCarry: number,
+   *     needsCorrection: boolean,
+   *     correctionReason: string,
+   *     correctionNibble: string,
+   *     finalSum4Bit: string,
+   *     finalDigit: number,
+   *     carryOut: number
+   *   }>,
+   *   hasOverflowCarry: boolean,
+   *   sumDecimal: string,
+   *   sumBCD: string
+   * }}
+   */
+  function addBCD(inputA, inputB, mode = 'decimal') {
+    const valA = validateBCDInput(inputA, mode);
+    if (!valA.isValid) return { success: false, error: `Operand A error: ${valA.error}` };
+
+    const valB = validateBCDInput(inputB, mode);
+    if (!valB.isValid) return { success: false, error: `Operand B error: ${valB.error}` };
+
+    const decA = valA.decimalStr;
+    const decB = valB.decimalStr;
+    const alignedWidth = Math.max(decA.length, decB.length);
+
+    const padDecA = decA.padStart(alignedWidth, '0');
+    const padDecB = decB.padStart(alignedWidth, '0');
+
+    let currentCarry = 0;
+    const nibbleSteps = [];
+    const resultDigits = [];
+    const resultNibbles = [];
+
+    // Right to left (LSD to MSD)
+    for (let i = alignedWidth - 1; i >= 0; i--) {
+      const digitA = parseInt(padDecA[i], 10);
+      const digitB = parseInt(padDecB[i], 10);
+      const nibbleA = BCD_TABLE[digitA];
+      const nibbleB = BCD_TABLE[digitB];
+      const carryIn = currentCarry;
+
+      // 1. Binary addition of the 4-bit nibbles + carry-in
+      const rawSum = digitA + digitB + carryIn;
+      const binCarry = rawSum >= 16 ? 1 : 0;
+      const binSum4BitVal = rawSum % 16;
+      const binSum4Bit = binSum4BitVal.toString(2).padStart(4, '0');
+
+      // 2. Correction check: > 9 or binary carry occurred
+      const needsCorrection = (rawSum > 9 || binCarry === 1);
+      let correctionReason = '';
+      if (rawSum > 9 && binCarry === 1) {
+        correctionReason = `Sum (${rawSum}₁₀) > 9 and 4-bit binary overflow (≥16)`;
+      } else if (rawSum > 9) {
+        correctionReason = `Sum (${rawSum}₁₀) > 9 (invalid BCD state)`;
+      } else if (binCarry === 1) {
+        correctionReason = `Binary carry occurred from nibble addition`;
+      } else {
+        correctionReason = `Sum (${rawSum}₁₀) ≤ 9; valid BCD digit, no correction needed`;
+      }
+
+      // 3. Add 6 (0110) if correction needed
+      const correctionVal = needsCorrection ? 6 : 0;
+      const finalSumVal = (binSum4BitVal + correctionVal) % 16;
+      const finalSum4Bit = finalSumVal.toString(2).padStart(4, '0');
+      const finalDigit = finalSumVal;
+      const carryOut = needsCorrection ? 1 : 0;
+
+      currentCarry = carryOut;
+      resultDigits.unshift(finalDigit.toString(10));
+      resultNibbles.unshift(finalSum4Bit);
+
+      const placePower = alignedWidth - 1 - i;
+      const placeName = placePower === 0 ? '10⁰ (Units)' : placePower === 1 ? '10¹ (Tens)' : placePower === 2 ? '10² (Hundreds)' : `10^${placePower}`;
+
+      nibbleSteps.push({
+        stepIndex: alignedWidth - i,
+        placeName,
+        nibbleA,
+        digitA,
+        nibbleB,
+        digitB,
+        carryIn,
+        rawSum,
+        binSum4Bit,
+        binCarry,
+        needsCorrection,
+        correctionReason,
+        correctionNibble: needsCorrection ? '0110' : '0000',
+        finalSum4Bit,
+        finalDigit,
+        carryOut
+      });
+    }
+
+    const hasOverflowCarry = currentCarry > 0;
+    if (hasOverflowCarry) {
+      resultDigits.unshift('1');
+      resultNibbles.unshift('0001');
+    }
+
+    const finalDecimal = resultDigits.join('');
+    const finalBCD = resultNibbles.join(' ');
+
+    return {
+      success: true,
+      decimalA: padDecA,
+      decimalB: padDecB,
+      bcdA: padDecA.split('').map(d => BCD_TABLE[d]).join(' '),
+      bcdB: padDecB.split('').map(d => BCD_TABLE[d]).join(' '),
+      alignedWidth,
+      nibbleSteps,
+      hasOverflowCarry,
+      sumDecimal: finalDecimal,
+      sumBCD: finalBCD
+    };
+  }
+
+  /**
+   * Computes the 9's complement of a decimal integer for BCD subtraction.
+   * @param {string|number} decimalVal 
+   * @param {number} width 
+   * @returns {{ decimalStr: string, bcdSpaced: string, nibbles: string[] }}
+   */
+  function getBCD9sComplement(decimalVal, width) {
+    let decStr = String(decimalVal).trim();
+    if (width > decStr.length) {
+      decStr = decStr.padStart(width, '0');
+    }
+    const compDigits = [];
+    for (let i = 0; i < decStr.length; i++) {
+      const d = parseInt(decStr[i], 10);
+      compDigits.push((9 - d).toString(10));
+    }
+    const compDecStr = compDigits.join('');
+    const nibbles = compDigits.map(d => BCD_TABLE[d]);
+    return {
+      decimalStr: compDecStr,
+      bcdSpaced: nibbles.join(' '),
+      nibbles
+    };
+  }
+
+  /**
+   * Computes the 10's complement of a decimal integer for BCD subtraction.
+   * Formula: 9's complement + 1 (using BCD addition).
+   * @param {string|number} decimalVal 
+   * @param {number} width 
+   * @returns {{ decimalStr: string, bcdSpaced: string, nibbles: string[] }}
+   */
+  function getBCD10sComplement(decimalVal, width) {
+    const comp9 = getBCD9sComplement(decimalVal, width);
+    // Add 1 to the 9's complement in BCD
+    const addOne = addBCD(comp9.decimalStr, '1', 'decimal');
+    let compDecStr = addOne.sumDecimal;
+    // In fixed width W, if overflow occurred (e.g. 0 -> 99 + 1 = 100 -> 00), retain width W
+    if (compDecStr.length > width) {
+      compDecStr = compDecStr.slice(-width);
+    } else if (compDecStr.length < width) {
+      compDecStr = compDecStr.padStart(width, '0');
+    }
+
+    const nibbles = compDecStr.split('').map(d => BCD_TABLE[d]);
+    return {
+      decimalStr: compDecStr,
+      bcdSpaced: nibbles.join(' '),
+      nibbles
+    };
+  }
+
+  /**
+   * Performs BCD Subtraction using the 9's Complement Method.
+   * Minuend A - Subtrahend B.
+   * 
+   * @param {string|number} inputA 
+   * @param {string|number} inputB 
+   * @param {'decimal'|'bcd'} [mode='decimal']
+   * @returns {{
+   *   success: boolean,
+   *   error?: string,
+   *   decimalA: string,
+   *   decimalB: string,
+   *   bcdA: string,
+   *   bcdB: string,
+   *   alignedWidth: number,
+   *   subtrahend9sCompDec: string,
+   *   subtrahend9sCompBCD: string,
+   *   additionResult: ReturnType<typeof addBCD>,
+   *   hasEndAroundCarry: boolean,
+   *   endAroundCarryStep?: ReturnType<typeof addBCD>,
+   *   recomplementedStep?: { decimalStr: string, bcdSpaced: string },
+   *   isNegative: boolean,
+   *   finalDecimal: string,
+   *   finalBCD: string,
+   *   explanation: string[]
+   * }}
+   */
+  function subtractBCD9sComplement(inputA, inputB, mode = 'decimal') {
+    const valA = validateBCDInput(inputA, mode);
+    if (!valA.isValid) return { success: false, error: `Minuend (A) error: ${valA.error}` };
+
+    const valB = validateBCDInput(inputB, mode);
+    if (!valB.isValid) return { success: false, error: `Subtrahend (B) error: ${valB.error}` };
+
+    const decA = valA.decimalStr;
+    const decB = valB.decimalStr;
+    const alignedWidth = Math.max(decA.length, decB.length);
+
+    const padDecA = decA.padStart(alignedWidth, '0');
+    const padDecB = decB.padStart(alignedWidth, '0');
+
+    // Step 1: 9's complement of subtrahend B
+    const comp9B = getBCD9sComplement(padDecB, alignedWidth);
+
+    // Step 2: BCD Addition of A + 9's complement of B
+    const addResult = addBCD(padDecA, comp9B.decimalStr, 'decimal');
+
+    const explanation = [];
+    explanation.push(`Step 1: Align operands to ${alignedWidth} digits: A = ${padDecA}₁₀, B = ${padDecB}₁₀`);
+    explanation.push(`Step 2: Obtain 9's complement of B: 9's comp of ${padDecB} = ${comp9B.decimalStr}₁₀ (BCD: ${comp9B.bcdSpaced})`);
+    explanation.push(`Step 3: Add A and 9's complement of B using BCD addition (+0110 correction): ${padDecA} + ${comp9B.decimalStr} = ${addResult.sumDecimal}₁₀`);
+
+    let hasEndAroundCarry = addResult.hasOverflowCarry;
+    let isNegative = false;
+    let finalDecimal = '';
+    let finalBCD = '';
+    let endAroundCarryStep = null;
+    let recomplementedStep = null;
+
+    if (hasEndAroundCarry) {
+      // A >= B: End-around carry occurs
+      isNegative = false;
+      explanation.push(`Step 4: End-Around Carry = 1 occurs (MSD carry-out is 1). This indicates A ≥ B (result is positive).`);
+
+      // Add the carry-out (1) back to the lower alignedWidth digits using BCD addition
+      const intermediateSum = addResult.sumDecimal.slice(-alignedWidth);
+      endAroundCarryStep = addBCD(intermediateSum, '1', 'decimal');
+      const resolvedMag = endAroundCarryStep.sumDecimal.slice(-alignedWidth);
+
+      explanation.push(`Step 5: Perform End-Around Carry: Add 1 to the least significant digit of ${intermediateSum} using BCD addition: ${intermediateSum} + 1 = ${resolvedMag}₁₀`);
+      
+      const trimmedDec = resolvedMag.replace(/^0+/, '') || '0';
+      finalDecimal = trimmedDec;
+      finalBCD = decimalToBCD(trimmedDec).bcdSpaced;
+      explanation.push(`Step 6: Final Positive BCD Result = ${finalBCD} (${finalDecimal}₁₀)`);
+    } else {
+      // A < B (or A = B special case if all 9s): No end-around carry
+      const intermediateSum = addResult.sumDecimal.padStart(alignedWidth, '0');
+      // If intermediate sum is all 9s, then A == B, result is 0
+      if (intermediateSum === '9'.repeat(alignedWidth)) {
+        isNegative = false;
+        finalDecimal = '0';
+        finalBCD = '0000';
+        explanation.push(`Step 4: End-Around Carry = 0 and sum is all 9s. This indicates A = B (result is 0).`);
+      } else {
+        isNegative = true;
+        explanation.push(`Step 4: End-Around Carry = 0 (no carry-out from MSD). This indicates A < B (result is negative).`);
+
+        // Re-complement: Take the 9's complement of the intermediate sum
+        recomplementedStep = getBCD9sComplement(intermediateSum, alignedWidth);
+        const resolvedMag = recomplementedStep.decimalStr.replace(/^0+/, '') || '0';
+
+        explanation.push(`Step 5: The sum ${intermediateSum} is in 9's complement form. Take 9's complement: 9's comp of ${intermediateSum} = ${recomplementedStep.decimalStr}₁₀`);
+        explanation.push(`Step 6: Prefix with a negative sign: -${resolvedMag}₁₀`);
+
+        finalDecimal = '-' + resolvedMag;
+        finalBCD = '-' + decimalToBCD(resolvedMag).bcdSpaced;
+      }
+    }
+
+    return {
+      success: true,
+      decimalA: padDecA,
+      decimalB: padDecB,
+      bcdA: padDecA.split('').map(d => BCD_TABLE[d]).join(' '),
+      bcdB: padDecB.split('').map(d => BCD_TABLE[d]).join(' '),
+      alignedWidth,
+      subtrahend9sCompDec: comp9B.decimalStr,
+      subtrahend9sCompBCD: comp9B.bcdSpaced,
+      additionResult: addResult,
+      hasEndAroundCarry,
+      endAroundCarryStep,
+      recomplementedStep,
+      isNegative,
+      finalDecimal,
+      finalBCD,
+      explanation
+    };
+  }
+
+  /**
+   * Performs BCD Subtraction using the 10's Complement Method.
+   * Minuend A - Subtrahend B.
+   * 
+   * @param {string|number} inputA 
+   * @param {string|number} inputB 
+   * @param {'decimal'|'bcd'} [mode='decimal']
+   * @returns {{
+   *   success: boolean,
+   *   error?: string,
+   *   decimalA: string,
+   *   decimalB: string,
+   *   bcdA: string,
+   *   bcdB: string,
+   *   alignedWidth: number,
+   *   subtrahend10sCompDec: string,
+   *   subtrahend10sCompBCD: string,
+   *   additionResult: ReturnType<typeof addBCD>,
+   *   hasEndCarry: boolean,
+   *   recomplementedStep?: { decimalStr: string, bcdSpaced: string },
+   *   isNegative: boolean,
+   *   finalDecimal: string,
+   *   finalBCD: string,
+   *   explanation: string[]
+   * }}
+   */
+  function subtractBCD10sComplement(inputA, inputB, mode = 'decimal') {
+    const valA = validateBCDInput(inputA, mode);
+    if (!valA.isValid) return { success: false, error: `Minuend (A) error: ${valA.error}` };
+
+    const valB = validateBCDInput(inputB, mode);
+    if (!valB.isValid) return { success: false, error: `Subtrahend (B) error: ${valB.error}` };
+
+    const decA = valA.decimalStr;
+    const decB = valB.decimalStr;
+    const alignedWidth = Math.max(decA.length, decB.length);
+
+    const padDecA = decA.padStart(alignedWidth, '0');
+    const padDecB = decB.padStart(alignedWidth, '0');
+
+    // Step 1: 10's complement of subtrahend B
+    const comp10B = getBCD10sComplement(padDecB, alignedWidth);
+
+    // Step 2: BCD Addition of A + 10's complement of B
+    const addResult = addBCD(padDecA, comp10B.decimalStr, 'decimal');
+
+    const explanation = [];
+    explanation.push(`Step 1: Align operands to ${alignedWidth} digits: A = ${padDecA}₁₀, B = ${padDecB}₁₀`);
+    explanation.push(`Step 2: Obtain 10's complement of B (9's comp + 1): 10's comp of ${padDecB} = ${comp10B.decimalStr}₁₀ (BCD: ${comp10B.bcdSpaced})`);
+    explanation.push(`Step 3: Add A and 10's complement of B using BCD addition (+0110 correction): ${padDecA} + ${comp10B.decimalStr} = ${addResult.sumDecimal}₁₀`);
+
+    let hasEndCarry = addResult.hasOverflowCarry;
+    let isNegative = false;
+    let finalDecimal = '';
+    let finalBCD = '';
+    let recomplementedStep = null;
+
+    if (hasEndCarry) {
+      // A >= B: End carry occurs
+      isNegative = false;
+      explanation.push(`Step 4: End-Carry = 1 occurs (MSD carry-out is 1). This indicates A ≥ B (result is positive).`);
+
+      // Discard the end carry
+      const intermediateSum = addResult.sumDecimal.slice(-alignedWidth);
+      explanation.push(`Step 5: Discard the End-Carry (drop the leading 1): Result magnitude = ${intermediateSum}₁₀`);
+
+      const trimmedDec = intermediateSum.replace(/^0+/, '') || '0';
+      finalDecimal = trimmedDec;
+      finalBCD = decimalToBCD(trimmedDec).bcdSpaced;
+      explanation.push(`Step 6: Final Positive BCD Result = ${finalBCD} (${finalDecimal}₁₀)`);
+    } else {
+      // A < B: No end carry
+      const intermediateSum = addResult.sumDecimal.padStart(alignedWidth, '0');
+      // If intermediate sum is 0, result is 0
+      if (intermediateSum === '0'.repeat(alignedWidth)) {
+        isNegative = false;
+        finalDecimal = '0';
+        finalBCD = '0000';
+        explanation.push(`Step 4: End-Carry = 0 and sum is 0. Result is 0.`);
+      } else {
+        isNegative = true;
+        explanation.push(`Step 4: End-Carry = 0 (no carry-out from MSD). This indicates A < B (result is negative).`);
+
+        // Re-complement: Take the 10's complement of the intermediate sum
+        recomplementedStep = getBCD10sComplement(intermediateSum, alignedWidth);
+        const resolvedMag = recomplementedStep.decimalStr.replace(/^0+/, '') || '0';
+
+        explanation.push(`Step 5: The sum ${intermediateSum} is in 10's complement form. Take 10's complement: 10's comp of ${intermediateSum} = ${recomplementedStep.decimalStr}₁₀`);
+        explanation.push(`Step 6: Prefix with a negative sign: -${resolvedMag}₁₀`);
+
+        finalDecimal = '-' + resolvedMag;
+        finalBCD = '-' + decimalToBCD(resolvedMag).bcdSpaced;
+      }
+    }
+
+    return {
+      success: true,
+      decimalA: padDecA,
+      decimalB: padDecB,
+      bcdA: padDecA.split('').map(d => BCD_TABLE[d]).join(' '),
+      bcdB: padDecB.split('').map(d => BCD_TABLE[d]).join(' '),
+      alignedWidth,
+      subtrahend10sCompDec: comp10B.decimalStr,
+      subtrahend10sCompBCD: comp10B.bcdSpaced,
+      additionResult: addResult,
+      hasEndCarry,
+      recomplementedStep,
+      isNegative,
+      finalDecimal,
+      finalBCD,
+      explanation
+    };
+  }
+
   return {
     BASES,
     validate,
@@ -843,6 +1395,15 @@
     getRadixComplement,
     getAllComplements,
     subtractUsingComplements,
-    calculateExpression
+    calculateExpression,
+    // BCD Engine Exports
+    validateBCDInput,
+    decimalToBCD,
+    bcdToDecimal,
+    addBCD,
+    getBCD9sComplement,
+    getBCD10sComplement,
+    subtractBCD9sComplement,
+    subtractBCD10sComplement
   };
 });

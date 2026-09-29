@@ -22,6 +22,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnResetDemo = document.getElementById('btn-reset-demo');
   const btnClearAll = document.getElementById('btn-clear-all');
 
+  // Mode Navigation Tabs
+  const tabBtnMultibase = document.getElementById('tab-btn-multibase');
+  const tabBtnBcd = document.getElementById('tab-btn-bcd');
+  const viewMultibase = document.getElementById('view-multibase');
+  const viewBcd = document.getElementById('view-bcd');
+
+  // BCD DOM Elements
+  const bcdDecA = document.getElementById('bcd-dec-a');
+  const bcdBinA = document.getElementById('bcd-bin-a');
+  const bcdCountA = document.getElementById('bcd-count-a');
+  const bcdDecB = document.getElementById('bcd-dec-b');
+  const bcdBinB = document.getElementById('bcd-bin-b');
+  const bcdCountB = document.getElementById('bcd-count-b');
+  const bcdOpAdd = document.getElementById('bcd-op-add');
+  const bcdOpSub = document.getElementById('bcd-op-sub');
+  const bcdErrorBanner = document.getElementById('bcd-error-banner');
+  const bcdErrorMessage = document.getElementById('bcd-error-message');
+  const bcdResultsContainer = document.getElementById('bcd-results-container');
+  const bcdOutputSubtitle = document.getElementById('bcd-output-subtitle');
+
+  let bcdCurrentOp = '+';
+
   // Result Elements
   const calcErrorBanner = document.getElementById('calc-error-banner');
   const calcErrorMessage = document.getElementById('calc-error-message');
@@ -71,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function init() {
     setupEventListeners();
     loadDemoData();
+    initBCD();
   }
 
   /**
@@ -890,6 +913,433 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  // =========================================================================
+  // BCD ARITHMETIC & COMPLEMENTS CONTROLLER
+  // =========================================================================
+
+  /**
+   * Initializes BCD module with default values and event listeners.
+   */
+  function initBCD() {
+    setupBCDEvents();
+    updateBCDCounters();
+    calculateBCD();
+  }
+
+  /**
+   * Switches between Multi-Base Calculator and BCD Arithmetic views.
+   * @param {'multibase'|'bcd'} tabMode 
+   */
+  function switchTab(tabMode) {
+    if (tabMode === 'bcd') {
+      if (tabBtnMultibase) {
+        tabBtnMultibase.classList.remove('active');
+        tabBtnMultibase.setAttribute('aria-selected', 'false');
+      }
+      if (tabBtnBcd) {
+        tabBtnBcd.classList.add('active');
+        tabBtnBcd.setAttribute('aria-selected', 'true');
+      }
+      if (viewMultibase) viewMultibase.style.display = 'none';
+      if (viewBcd) viewBcd.style.display = 'block';
+      calculateBCD();
+    } else {
+      if (tabBtnBcd) {
+        tabBtnBcd.classList.remove('active');
+        tabBtnBcd.setAttribute('aria-selected', 'false');
+      }
+      if (tabBtnMultibase) {
+        tabBtnMultibase.classList.add('active');
+        tabBtnMultibase.setAttribute('aria-selected', 'true');
+      }
+      if (viewBcd) viewBcd.style.display = 'none';
+      if (viewMultibase) viewMultibase.style.display = 'block';
+      calculateIfValid();
+    }
+  }
+
+  /**
+   * Binds all BCD UI interactions and real-time listeners.
+   */
+  function setupBCDEvents() {
+    // Mode Switcher Tabs
+    if (tabBtnMultibase) tabBtnMultibase.addEventListener('click', () => switchTab('multibase'));
+    if (tabBtnBcd) tabBtnBcd.addEventListener('click', () => switchTab('bcd'));
+
+    // Bi-directional input sync for Operand A
+    if (bcdDecA && bcdBinA) {
+      bcdDecA.addEventListener('input', () => {
+        const val = bcdDecA.value.trim();
+        if (val === '') {
+          bcdBinA.value = '';
+          updateBCDCounters();
+          hideBCDError();
+          calculateBCD();
+          return;
+        }
+        const res = BaseConverter.validateBCDInput(val, 'decimal');
+        if (res.isValid) {
+          bcdBinA.value = res.bcdSpaced;
+          updateBCDCounters();
+          hideBCDError();
+          calculateBCD();
+        } else {
+          showBCDError(`Operand A: ${res.error}`);
+        }
+      });
+
+      bcdBinA.addEventListener('input', () => {
+        const val = bcdBinA.value.trim();
+        if (val === '') {
+          bcdDecA.value = '';
+          updateBCDCounters();
+          hideBCDError();
+          calculateBCD();
+          return;
+        }
+        const res = BaseConverter.validateBCDInput(val, 'bcd');
+        if (res.isValid) {
+          bcdDecA.value = res.decimalStr;
+          updateBCDCounters();
+          hideBCDError();
+          calculateBCD();
+        } else {
+          showBCDError(`Operand A: ${res.error}`);
+        }
+      });
+    }
+
+    // Bi-directional input sync for Operand B
+    if (bcdDecB && bcdBinB) {
+      bcdDecB.addEventListener('input', () => {
+        const val = bcdDecB.value.trim();
+        if (val === '') {
+          bcdBinB.value = '';
+          updateBCDCounters();
+          hideBCDError();
+          calculateBCD();
+          return;
+        }
+        const res = BaseConverter.validateBCDInput(val, 'decimal');
+        if (res.isValid) {
+          bcdBinB.value = res.bcdSpaced;
+          updateBCDCounters();
+          hideBCDError();
+          calculateBCD();
+        } else {
+          showBCDError(`Operand B: ${res.error}`);
+        }
+      });
+
+      bcdBinB.addEventListener('input', () => {
+        const val = bcdBinB.value.trim();
+        if (val === '') {
+          bcdDecB.value = '';
+          updateBCDCounters();
+          hideBCDError();
+          calculateBCD();
+          return;
+        }
+        const res = BaseConverter.validateBCDInput(val, 'bcd');
+        if (res.isValid) {
+          bcdDecB.value = res.decimalStr;
+          updateBCDCounters();
+          hideBCDError();
+          calculateBCD();
+        } else {
+          showBCDError(`Operand B: ${res.error}`);
+        }
+      });
+    }
+
+    // Operator toggle buttons
+    if (bcdOpAdd && bcdOpSub) {
+      bcdOpAdd.addEventListener('click', () => {
+        bcdCurrentOp = '+';
+        bcdOpAdd.classList.add('active');
+        bcdOpSub.classList.remove('active');
+        calculateBCD();
+      });
+
+      bcdOpSub.addEventListener('click', () => {
+        bcdCurrentOp = '-';
+        bcdOpSub.classList.add('active');
+        bcdOpAdd.classList.remove('active');
+        calculateBCD();
+      });
+    }
+
+    // Delegated copy button listener (works for both standard and BCD copy buttons)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.copy-btn');
+      if (btn) {
+        const targetId = btn.getAttribute('data-copy-target');
+        const targetEl = document.getElementById(targetId);
+        let textToCopy = '';
+        if (targetEl) {
+          if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA') {
+            textToCopy = targetEl.value;
+          } else {
+            textToCopy = targetEl.textContent;
+          }
+        }
+        if (textToCopy && textToCopy.trim() !== '' && textToCopy.trim() !== '—') {
+          copyToClipboard(textToCopy.trim(), btn);
+        } else {
+          showToast('No calculated result to copy yet.', 'info');
+        }
+      }
+    });
+  }
+
+  /**
+   * Updates digit count tags for Operand A and Operand B.
+   */
+  function updateBCDCounters() {
+    if (bcdDecA && bcdCountA) {
+      const lenA = bcdDecA.value.trim().length;
+      bcdCountA.textContent = `${lenA} Digit${lenA === 1 ? '' : 's'} • ${lenA * 4} Bits`;
+    }
+    if (bcdDecB && bcdCountB) {
+      const lenB = bcdDecB.value.trim().length;
+      bcdCountB.textContent = `${lenB} Digit${lenB === 1 ? '' : 's'} • ${lenB * 4} Bits`;
+    }
+  }
+
+  function showBCDError(msg) {
+    if (bcdErrorBanner && bcdErrorMessage) {
+      bcdErrorBanner.style.display = 'flex';
+      bcdErrorMessage.textContent = msg;
+    }
+  }
+
+  function hideBCDError() {
+    if (bcdErrorBanner) {
+      bcdErrorBanner.style.display = 'none';
+    }
+  }
+
+  /**
+   * Main calculation dispatcher for BCD Addition and Subtraction.
+   */
+  function calculateBCD() {
+    const valA = bcdDecA ? bcdDecA.value.trim() : '';
+    const valB = bcdDecB ? bcdDecB.value.trim() : '';
+
+    if (!valA || !valB) {
+      if (bcdResultsContainer) {
+        bcdResultsContainer.innerHTML = `
+          <div style="padding: 2.5rem 1.5rem; text-align: center; color: var(--text-secondary); background: var(--bg-secondary); border-radius: var(--radius-lg); border: 1.5px dashed var(--card-border);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 0.75rem; color: var(--text-secondary); opacity: 0.6;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem;">Awaiting Operands</p>
+            <p style="font-size: 0.85rem;">Enter values for Operand A and Operand B to view calculation.</p>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    const checkA = BaseConverter.validateBCDInput(valA, 'decimal');
+    const checkB = BaseConverter.validateBCDInput(valB, 'decimal');
+
+    if (!checkA.isValid) {
+      showBCDError(`Operand A: ${checkA.error}`);
+      return;
+    }
+    if (!checkB.isValid) {
+      showBCDError(`Operand B: ${checkB.error}`);
+      return;
+    }
+
+    hideBCDError();
+
+    if (bcdCurrentOp === '+') {
+      if (bcdOutputSubtitle) {
+        bcdOutputSubtitle.textContent = '8421 BCD Addition with 4-bit nibble addition and +0110 (+6) correction';
+      }
+      const addRes = BaseConverter.addBCD(valA, valB, 'decimal');
+      if (!addRes.success) {
+        showBCDError(addRes.error);
+        return;
+      }
+      renderBCDAddition(addRes);
+    } else {
+      if (bcdOutputSubtitle) {
+        bcdOutputSubtitle.textContent = "8421 BCD Subtraction comparative analysis using 9's and 10's Complements";
+      }
+      const sub9 = BaseConverter.subtractBCD9sComplement(valA, valB, 'decimal');
+      const sub10 = BaseConverter.subtractBCD10sComplement(valA, valB, 'decimal');
+      if (!sub9.success) {
+        showBCDError(sub9.error);
+        return;
+      }
+      renderBCDSubtraction(sub9, sub10);
+    }
+  }
+
+  /**
+   * Renders BCD Addition output cleanly without verbose step breakdown.
+   * @param {ReturnType<typeof BaseConverter.addBCD>} addRes 
+   */
+  function renderBCDAddition(addRes) {
+    if (!bcdResultsContainer) return;
+
+    const overflowBadge = addRes.hasOverflowCarry ? `
+      <div style="background: #EFF6FF; border: 1px solid #BFDBFE; color: var(--brand-text); padding: 0.65rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>End Carry Out from MSD = 1 &bull; Prepends a new leading BCD digit '0001₂' (1₁₀)</span>
+      </div>
+    ` : '';
+
+    bcdResultsContainer.innerHTML = `
+      <!-- Summary Card -->
+      <div class="bcd-summary-card">
+        <div class="bcd-summary-header">
+          <span class="bcd-summary-title">BCD Addition Result (A + B)</span>
+          <button type="button" class="copy-btn" data-copy-target="bcd-sum-val" title="Copy BCD bitstring">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy BCD
+          </button>
+        </div>
+
+        <div class="bcd-primary-values">
+          <div class="bcd-val-row">
+            <span class="bcd-val-label">BCD 8421:</span>
+            <span id="bcd-sum-val" class="bcd-val-code">${escapeHtml(addRes.sumBCD)}</span>
+            <sub class="result-subscript">BCD</sub>
+          </div>
+          <div class="bcd-val-row">
+            <span class="bcd-val-label">Decimal Sum:</span>
+            <span class="bcd-val-dec">${escapeHtml(addRes.sumDecimal)}₁₀</span>
+          </div>
+        </div>
+
+        ${overflowBadge}
+      </div>
+    `;
+  }
+
+  /**
+   * Renders BCD Subtraction output comparing 9's and 10's complement methods cleanly.
+   * @param {ReturnType<typeof BaseConverter.subtractBCD9sComplement>} sub9 
+   * @param {ReturnType<typeof BaseConverter.subtractBCD10sComplement>} sub10 
+   */
+  function renderBCDSubtraction(sub9, sub10) {
+    if (!bcdResultsContainer) return;
+
+    bcdResultsContainer.innerHTML = `
+      <!-- Summary Card -->
+      <div class="bcd-summary-card">
+        <div class="bcd-summary-header">
+          <span class="bcd-summary-title">BCD Subtraction Result (A − B)</span>
+          <button type="button" class="copy-btn" data-copy-target="bcd-diff-val" title="Copy BCD difference">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy BCD
+          </button>
+        </div>
+
+        <div class="bcd-primary-values">
+          <div class="bcd-val-row">
+            <span class="bcd-val-label">BCD 8421:</span>
+            <span id="bcd-diff-val" class="bcd-val-code">${escapeHtml(sub9.finalBCD)}</span>
+            <sub class="result-subscript">BCD</sub>
+          </div>
+          <div class="bcd-val-row">
+            <span class="bcd-val-label">Decimal Diff:</span>
+            <span class="bcd-val-dec">${escapeHtml(sub9.finalDecimal)}₁₀</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.25rem;">
+          <span class="carry-flag-badge ${sub9.isNegative ? 'carry-no' : 'carry-yes'}">
+            ${sub9.isNegative ? 'Negative Result (A < B)' : 'Positive Result (A ≥ B)'}
+          </span>
+        </div>
+      </div>
+
+      <!-- Comparative 2-Column Grid -->
+      <div class="bcd-complements-grid">
+
+        <!-- Method 1: 9's Complement Method -->
+        <article class="bcd-method-card">
+          <div class="bcd-method-header">
+            <span class="bcd-method-title">9's Complement Method</span>
+            <span class="carry-flag-badge ${sub9.hasEndAroundCarry ? 'carry-yes' : 'carry-no'}">
+              ${sub9.hasEndAroundCarry ? 'End-Around Carry = 1' : 'End-Around Carry = 0'}
+            </span>
+          </div>
+
+          <div class="bcd-method-result">
+            <span class="res-label">Method Result</span>
+            <span class="res-val">${escapeHtml(sub9.finalBCD)}</span>
+            <span class="res-dec">= ${escapeHtml(sub9.finalDecimal)}₁₀</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-secondary); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--card-border);">
+            <div>
+              <strong style="color: var(--text-primary);">9's Complement of B:</strong>
+              <div style="font-family: var(--font-mono); font-weight: 600; color: var(--brand-text);">${escapeHtml(sub9.subtrahend9sCompBCD)} &nbsp;(${escapeHtml(sub9.subtrahend9sCompDec)}₁₀)</div>
+            </div>
+            <div>
+              <strong style="color: var(--text-primary);">BCD Sum [A + 9's comp(B)]:</strong>
+              <div style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">${escapeHtml(sub9.additionResult.sumBCD)} &nbsp;(${escapeHtml(sub9.additionResult.sumDecimal)}₁₀)</div>
+            </div>
+            <div>
+              <strong style="color: var(--text-primary);">End-Around Carry Action:</strong>
+              <div>${sub9.hasEndAroundCarry ? 'Carry = 1 (A ≥ B) &bull; Added 1 to LSD' : 'Carry = 0 (A < B) &bull; Re-complemented (negative)'}</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Method 2: 10's Complement Method -->
+        <article class="bcd-method-card">
+          <div class="bcd-method-header">
+            <span class="bcd-method-title">10's Complement Method</span>
+            <span class="carry-flag-badge ${sub10.hasEndCarry ? 'carry-yes' : 'carry-no'}">
+              ${sub10.hasEndCarry ? 'End Carry = 1 (Discard)' : 'End Carry = 0 (Re-comp)'}
+            </span>
+          </div>
+
+          <div class="bcd-method-result">
+            <span class="res-label">Method Result</span>
+            <span class="res-val">${escapeHtml(sub10.finalBCD)}</span>
+            <span class="res-dec">= ${escapeHtml(sub10.finalDecimal)}₁₀</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-secondary); padding: 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--card-border);">
+            <div>
+              <strong style="color: var(--text-primary);">10's Complement of B:</strong>
+              <div style="font-family: var(--font-mono); font-weight: 600; color: var(--brand-text);">${escapeHtml(sub10.subtrahend10sCompBCD)} &nbsp;(${escapeHtml(sub10.subtrahend10sCompDec)}₁₀)</div>
+            </div>
+            <div>
+              <strong style="color: var(--text-primary);">BCD Sum [A + 10's comp(B)]:</strong>
+              <div style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">${escapeHtml(sub10.additionResult.sumBCD)} &nbsp;(${escapeHtml(sub10.additionResult.sumDecimal)}₁₀)</div>
+            </div>
+            <div>
+              <strong style="color: var(--text-primary);">End-Carry Action:</strong>
+              <div>${sub10.hasEndCarry ? 'Carry = 1 (A ≥ B) &bull; End carry discarded' : 'Carry = 0 (A < B) &bull; Re-complemented (negative)'}</div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    `;
   }
 
   // Start the application

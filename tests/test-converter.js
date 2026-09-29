@@ -164,4 +164,96 @@ const singleOpCalc = BaseConverter.calculateExpression([
 assert.strictEqual(singleOpCalc.success, true);
 assert.strictEqual(singleOpCalc.decimalResult, 60);
 
-console.log('All Extended BaseConverter tests passed successfully!');
+// 6. BCD Engine Tests
+console.log('6. Testing BCD Engine (Addition, 9\'s and 10\'s Complements)...');
+
+// A. BCD Validation & Conversion
+assert.strictEqual(BaseConverter.validateBCDInput('48', 'decimal').isValid, true);
+assert.strictEqual(BaseConverter.validateBCDInput('4A', 'decimal').isValid, false);
+assert.strictEqual(BaseConverter.validateBCDInput('0100 1000', 'bcd').isValid, true);
+assert.strictEqual(BaseConverter.validateBCDInput('0100 1000', 'bcd').decimalStr, '48');
+assert.strictEqual(BaseConverter.validateBCDInput('1010', 'bcd').isValid, false); // 1010 is invalid BCD (10 > 9)
+assert.strictEqual(BaseConverter.validateBCDInput('1111', 'bcd').isValid, false); // 1111 is invalid BCD (15 > 9)
+
+assert.strictEqual(BaseConverter.decimalToBCD('48').bcdSpaced, '0100 1000');
+assert.strictEqual(BaseConverter.bcdToDecimal('0100 1000'), '48');
+
+// B. BCD Addition without correction: 12 + 23 = 35
+const addNoCorr = BaseConverter.addBCD('12', '23');
+assert.strictEqual(addNoCorr.success, true);
+assert.strictEqual(addNoCorr.sumDecimal, '35');
+assert.strictEqual(addNoCorr.sumBCD, '0011 0101');
+assert.strictEqual(addNoCorr.nibbleSteps[0].needsCorrection, false);
+assert.strictEqual(addNoCorr.nibbleSteps[1].needsCorrection, false);
+
+// C. BCD Addition with >9 correction: 35 + 28 = 63
+// 5 + 8 = 13 (>9) -> +6 -> 19 (0011), carry = 1; 3 + 2 + 1 = 6 (0110)
+const addWithCorr = BaseConverter.addBCD('35', '28');
+assert.strictEqual(addWithCorr.success, true);
+assert.strictEqual(addWithCorr.sumDecimal, '63');
+assert.strictEqual(addWithCorr.sumBCD, '0110 0011');
+assert.strictEqual(addWithCorr.nibbleSteps[0].needsCorrection, true);
+assert.strictEqual(addWithCorr.nibbleSteps[0].correctionNibble, '0110');
+assert.strictEqual(addWithCorr.nibbleSteps[1].needsCorrection, false);
+
+// D. BCD Addition with binary overflow carry: 8 + 9 = 17
+const addBinCarry = BaseConverter.addBCD('8', '9');
+assert.strictEqual(addBinCarry.success, true);
+assert.strictEqual(addBinCarry.sumDecimal, '17');
+assert.strictEqual(addBinCarry.sumBCD, '0001 0111');
+assert.strictEqual(addBinCarry.nibbleSteps[0].needsCorrection, true);
+
+// E. Multi-digit BCD Addition with MSD overflow: 99 + 1 = 100
+const addCascade = BaseConverter.addBCD('99', '1');
+assert.strictEqual(addCascade.success, true);
+assert.strictEqual(addCascade.sumDecimal, '100');
+assert.strictEqual(addCascade.sumBCD, '0001 0000 0000');
+assert.strictEqual(addCascade.hasOverflowCarry, true);
+
+// F. BCD 9's and 10's Complements
+// 28 with width 2 -> 9's comp = 71, 10's comp = 72
+assert.strictEqual(BaseConverter.getBCD9sComplement('28', 2).decimalStr, '71');
+assert.strictEqual(BaseConverter.getBCD9sComplement('28', 2).bcdSpaced, '0111 0001');
+assert.strictEqual(BaseConverter.getBCD10sComplement('28', 2).decimalStr, '72');
+assert.strictEqual(BaseConverter.getBCD10sComplement('28', 2).bcdSpaced, '0111 0010');
+
+// G. BCD Subtraction via 9's Complement (A >= B): 75 - 28 = 47
+const bcdSub9Pos = BaseConverter.subtractBCD9sComplement('75', '28');
+assert.strictEqual(bcdSub9Pos.success, true);
+assert.strictEqual(bcdSub9Pos.hasEndAroundCarry, true);
+assert.strictEqual(bcdSub9Pos.isNegative, false);
+assert.strictEqual(bcdSub9Pos.finalDecimal, '47');
+assert.strictEqual(bcdSub9Pos.finalBCD, '0100 0111');
+
+// H. BCD Subtraction via 9's Complement (A < B): 28 - 75 = -47
+const bcdSub9Neg = BaseConverter.subtractBCD9sComplement('28', '75');
+assert.strictEqual(bcdSub9Neg.success, true);
+assert.strictEqual(bcdSub9Neg.hasEndAroundCarry, false);
+assert.strictEqual(bcdSub9Neg.isNegative, true);
+assert.strictEqual(bcdSub9Neg.finalDecimal, '-47');
+assert.strictEqual(bcdSub9Neg.finalBCD, '-0100 0111');
+
+// I. BCD Subtraction via 10's Complement (A >= B): 75 - 28 = 47
+const bcdSub10Pos = BaseConverter.subtractBCD10sComplement('75', '28');
+assert.strictEqual(bcdSub10Pos.success, true);
+assert.strictEqual(bcdSub10Pos.hasEndCarry, true);
+assert.strictEqual(bcdSub10Pos.isNegative, false);
+assert.strictEqual(bcdSub10Pos.finalDecimal, '47');
+assert.strictEqual(bcdSub10Pos.finalBCD, '0100 0111');
+
+// J. BCD Subtraction via 10's Complement (A < B): 28 - 75 = -47
+const bcdSub10Neg = BaseConverter.subtractBCD10sComplement('28', '75');
+assert.strictEqual(bcdSub10Neg.success, true);
+assert.strictEqual(bcdSub10Neg.hasEndCarry, false);
+assert.strictEqual(bcdSub10Neg.isNegative, true);
+assert.strictEqual(bcdSub10Neg.finalDecimal, '-47');
+assert.strictEqual(bcdSub10Neg.finalBCD, '-0100 0111');
+
+// K. Equal operands: 25 - 25 = 0
+const bcdSub9Eq = BaseConverter.subtractBCD9sComplement('25', '25');
+assert.strictEqual(bcdSub9Eq.finalDecimal, '0');
+const bcdSub10Eq = BaseConverter.subtractBCD10sComplement('25', '25');
+assert.strictEqual(bcdSub10Eq.finalDecimal, '0');
+
+console.log('All Extended BaseConverter and BCD tests passed successfully!');
+
